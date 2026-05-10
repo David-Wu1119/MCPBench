@@ -1,0 +1,51 @@
+{
+  "name": "mcpbench",
+  "version": "0.1.0",
+  "description": "Benchmark + score MCP servers across schema quality, latency, description safety, and permission clarity. Produces a report card you can paste into your README.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "mcpbench": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli.ts",
+    "test": "tsx --test test/*.test.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "benchmark",
+    "ai-security",
+    "llm-security",
+    "anthropic",
+    "claude",
+    "scoring"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/David-Wu1119/MCPBench.git"
+  },
+  "bugs": {
+    "url": "https://github.com/David-Wu1119/MCPBench/issues"
+  },
+  "homepage": "https://github.com/David-Wu1119/MCPBench#readme"
+}

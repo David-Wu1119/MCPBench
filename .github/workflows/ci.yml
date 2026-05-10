@@ -1,0 +1,80 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  smoke:
+    name: smoke (node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ["18", "20", "22"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: type-check + build
+        run: npx tsc
+
+      - name: CLI loads
+        run: |
+          node dist/cli.js --version
+          node dist/cli.js --help
+          node dist/cli.js bench --help
+
+      - name: bench good-server (must exit 0)
+        run: |
+          set +e
+          node dist/cli.js bench node test/fixtures/good-server.mjs --samples 3
+          CODE=$?
+          set -e
+          test "$CODE" = "0"
+
+      - name: bench bad-server (must exit 1 — D grade)
+        run: |
+          set +e
+          node dist/cli.js bench node test/fixtures/bad-server.mjs --samples 3
+          CODE=$?
+          set -e
+          test "$CODE" = "1"
+
+      - name: JSON output is well-formed and reports findings
+        run: |
+          node dist/cli.js bench --json --out r.json node test/fixtures/bad-server.mjs --samples 3 || true
+          node -e "const fs=require('fs'); const r=JSON.parse(fs.readFileSync('./r.json','utf8')); if(r.overall.score>=65) throw new Error('expected D, got '+r.overall.score); if(!r.categories.find(c=>c.id==='safety').findings.length) throw new Error('expected safety findings');"
+
+      - name: badge generator
+        run: |
+          node dist/cli.js bench --badge node test/fixtures/good-server.mjs --samples 1 | grep -q 'shields.io/badge/mcpbench'
+
+      - name: unit tests
+        run: npm test
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mcpbench-report-node${{ matrix.node-version }}
+          path: r.json
+          if-no-files-found: ignore
+
+  publish-dryrun:
+    name: npm pack (dry-run)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - run: npm ci
+      - run: npx tsc
+      - run: npm pack --dry-run
