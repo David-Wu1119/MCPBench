@@ -1,18 +1,37 @@
-# mcpbench
+# MCPBench
 
 [![ci](https://github.com/David-Wu1119/MCPBench/actions/workflows/ci.yml/badge.svg)](https://github.com/David-Wu1119/MCPBench/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node 18+](https://img.shields.io/badge/node-18+-339933.svg)](https://nodejs.org/)
 
-> A report card for any MCP server.
+> A measurement harness for MCP servers: run probes, score the server, and emit a report card that can fail CI.
 
-`mcpbench` spawns an MCP server, speaks JSON-RPC at it, and grades it across four categories: **schema quality**, **latency**, **description safety**, and **permission clarity**. You get a 0–100 score per category, a letter grade overall, a list of concrete findings, and a Shields.io badge for your README.
+MCPBench is a compact example of how I build systems measurement infrastructure:
+define measurable failure modes, drive the target through a reproducible harness,
+and return numbers plus concrete findings. Here the target is an MCP server; the
+same harness shape transfers to serving engines by swapping in latency, quality,
+cost, cache, and energy probes.
+
+It spawns an MCP server, speaks JSON-RPC to it, and grades the server across four
+categories:
+
+| Signal | What MCPBench measures |
+| --- | --- |
+| Schema quality | Missing descriptions, broken input schemas, required/property mismatches |
+| Latency | `initialize` and `tools/list` p50/p95 across repeated samples |
+| Description safety | Prompt-injection patterns, invisible Unicode, code-exec bait, leaked secrets |
+| Permission clarity | Destructive-looking tools that fail to warn the agent |
+
+One command:
 
 ```bash
 npx mcpbench bench -- npx @modelcontextprotocol/server-filesystem ~/Documents
 ```
 
-Sample output:
+Output is designed for humans and CI: 0-100 category scores, an overall letter
+grade, concrete findings, JSON output, and an optional README badge.
+
+Short sample:
 
 ```
 MCPBench Report Card
@@ -38,7 +57,6 @@ Findings
   [HIGH] Description safety  — prompt-override         fetch:    description contains a prompt-override pattern.
   [HIGH] Permission clarity  — dangerous-without-warning fetch:  Tool name/description implies a destructive action but does not warn the agent.
   [HIGH] Permission clarity  — dangerous-without-warning exec:   Tool name/description implies a destructive action but does not warn the agent.
-  [MED ] Schema quality      — undescribed-params      fetch:    1/1 parameter(s) have no description: url.
 ```
 
 ## Install
